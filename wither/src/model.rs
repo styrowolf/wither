@@ -8,9 +8,11 @@ use async_trait::async_trait;
 use mongodb::bson::oid::ObjectId;
 use mongodb::bson::{doc, from_bson, to_bson};
 use mongodb::bson::{Bson, Document};
+use mongodb::change_stream::ChangeStream;
+use mongodb::change_stream::event::ChangeStreamEvent;
 use mongodb::options::{self, IndexOptions};
 use mongodb::results::DeleteResult;
-use mongodb::IndexModel;
+use mongodb::{IndexModel, change_stream};
 use mongodb::{Collection, Database};
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -131,6 +133,14 @@ where
         O: Into<Option<options::FindOneAndUpdateOptions>> + Send,
     {
         Ok(Self::collection(db).find_one_and_update(filter, update, options).await?)
+    }
+
+    async fn watch<P, O>(db: &Database, pipeline: P, options: O) -> Result<ChangeStream<ChangeStreamEvent<Self>>>
+    where 
+        P: IntoIterator<Item = Document> + Send,
+        O: Into<Option<options::ChangeStreamOptions>> + Send,
+    {
+        Ok(Self::collection(db).watch(pipeline, options).await?)
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
